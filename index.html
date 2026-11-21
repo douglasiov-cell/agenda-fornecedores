@@ -157,14 +157,14 @@ Salvar Agendamento
 
 <script>
 
-const supabase = window.supabase.createClient(
+const banco = window.supabase.createClient(
   "https://gpwyfjqvyslwolpsukfm.supabase.co",
   "sb_publishable_K5ST_DKSg7qI5b3kJ7by1A_HrddCjVk"
 );
 
 async function carregarFornecedores(){
 
-  const { data } = await supabase
+  const { data } = await banco
      .from("fornecedores")
      .select("*")
      .order("nome");
