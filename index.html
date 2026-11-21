@@ -3,54 +3,61 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Agenda Fornecedores V2</title>
+
+<title>Agenda de Fornecedores V2</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body{
-font-family:Arial,sans-serif;
-background:#f4f6f9;
-margin:20px;
+  font-family:Arial,sans-serif;
+  background:#f4f6f9;
+  margin:20px;
 }
 
 .container{
-max-width:1200px;
-margin:auto;
+  max-width:1200px;
+  margin:auto;
 }
 
 .card{
-background:white;
-padding:20px;
-margin-bottom:20px;
-border-radius:10px;
-box-shadow:0 2px 6px rgba(0,0,0,.1);
+  background:white;
+  border-radius:10px;
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
 }
 
 input,select{
-width:100%;
-padding:10px;
-margin-top:5px;
-margin-bottom:10px;
+  width:100%;
+  padding:10px;
+  margin-top:5px;
+  margin-bottom:10px;
 }
 
 button{
-background:#17365d;
-color:white;
-border:none;
-padding:10px 15px;
-cursor:pointer;
-border-radius:5px;
+  background:#17365d;
+  color:white;
+  border:none;
+  padding:10px 15px;
+  border-radius:5px;
+  cursor:pointer;
 }
 
 table{
-width:100%;
-border-collapse:collapse;
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
 }
 
-th,td{
-border:1px solid #ddd;
-padding:8px;
+table th,
+table td{
+  border:1px solid #ddd;
+  padding:8px;
+}
+
+h2{
+  margin-top:0;
 }
 </style>
 
@@ -61,6 +68,7 @@ padding:8px;
 <div class="container">
 
 <div class="card">
+
 <h2>Cadastro de Fornecedores</h2>
 
 <label>Código</label>
@@ -77,20 +85,69 @@ Salvar Fornecedor
 
 <div class="card">
 
-<h2>Fornecedores Cadastrados</h2>
+<h2>Cadastro de Depósitos</h2>
+
+<label>Nome do Depósito</label>
+<input id="nomeDeposito">
+
+<button onclick="salvarDeposito()">
+Salvar Depósito
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>Novo Agendamento</h2>
+
+<label>Fornecedor</label>
+<select id="fornecedor"></select>
+
+<label>Depósito</label>
+<select id="deposito"></select>
+
+<label>Data</label>
+<input type="date" id="data">
+
+<label>Solicitante</label>
+<input id="solicitante">
+
+<label>Hora Inicial</label>
+<input type="time" id="horaInicio">
+
+<label>Hora Final</label>
+<input type="time" id="horaFim">
+
+<label>Pallets</label>
+<input type="number" id="pallets">
+
+<label>Finalidade</label>
+<input id="finalidade">
+
+<button onclick="salvarAgendamento()">
+Salvar Agendamento
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>Agendamentos</h2>
 
 <table>
 
 <thead>
 <tr>
-<th>Código</th>
-<th>Nome</th>
+<th>Fornecedor</th>
+<th>Depósito</th>
+<th>Data</th>
+<th>Início</th>
+<th>Fim</th>
+<th>Status</th>
 </tr>
 </thead>
 
-<tbody id="listaFornecedores">
-
-</tbody>
+<tbody id="listaAgendamentos"></tbody>
 
 </table>
 
@@ -101,77 +158,185 @@ Salvar Fornecedor
 <script>
 
 const supabase = window.supabase.createClient(
-'https://gpwyfjqvyslwolpsukfm.supabase.co',
-'sb_publishable_K5ST_DKSg7qI5b3kJ7by1A_HrddCjVk'
+  "https://gpwyfjqvyslwolpsukfm.supabase.co",
+  "sb_publishable_K5ST_DKSg7qI5b3kJ7by1A_HrddCjVk"
 );
 
 async function carregarFornecedores(){
 
-const { data, error } = await supabase
-.from('fornecedores')
-.select('*')
-.order('id');
+  const { data } = await supabase
+     .from("fornecedores")
+     .select("*")
+     .order("nome");
 
-if(error){
-console.error(error);
-alert(error.message);
-return;
+  let combo = document.getElementById("fornecedor");
+
+  combo.innerHTML = "";
+
+  data.forEach(f => {
+
+    combo.innerHTML +=
+    `<option value="${f.id}">
+      ${f.codigo} - ${f.nome}
+    </option>`;
+
+  });
+
 }
 
-const lista =
-document.getElementById('listaFornecedores');
+async function carregarDepositos(){
 
-lista.innerHTML='';
+  const { data } = await supabase
+     .from("depositos")
+     .select("*")
+     .order("nome");
 
-data.forEach(item=>{
+  let combo = document.getElementById("deposito");
 
-lista.innerHTML += `
-<tr>
-<td>${item.codigo}</td>
-<td>${item.nome}</td>
-</tr>
-`;
+  combo.innerHTML = "";
 
-});
+  data.forEach(d => {
+
+    combo.innerHTML +=
+    `<option value="${d.id}">
+      ${d.nome}
+    </option>`;
+
+  });
 
 }
 
 async function salvarFornecedor(){
 
-const codigo =
-document.getElementById('codigoFornecedor').value;
+  const codigo =
+  document.getElementById("codigoFornecedor").value;
 
-const nome =
-document.getElementById('nomeFornecedor').value;
+  const nome =
+  document.getElementById("nomeFornecedor").value;
 
-if(!codigo || !nome){
-alert('Preencha código e nome');
-return;
-}
+  const { error } = await supabase
+  .from("fornecedores")
+  .insert({
+      codigo:codigo,
+      nome:nome
+  });
 
-const { error } = await supabase
-.from('fornecedores')
-.insert({
-codigo:codigo,
-nome:nome
-});
+  if(error){
+      alert(error.message);
+      return;
+  }
 
-if(error){
-console.error(error);
-alert(error.message);
-return;
-}
+  alert("Fornecedor salvo");
 
-alert('Fornecedor salvo');
-
-document.getElementById('codigoFornecedor').value='';
-document.getElementById('nomeFornecedor').value='';
-
-carregarFornecedores();
+  carregarFornecedores();
 
 }
 
-carregarFornecedores();
+async function salvarDeposito(){
+
+  const nome =
+  document.getElementById("nomeDeposito").value;
+
+  const { error } = await supabase
+  .from("depositos")
+  .insert({
+      nome:nome
+  });
+
+  if(error){
+      alert(error.message);
+      return;
+  }
+
+  alert("Depósito salvo");
+
+  carregarDepositos();
+
+}
+
+async function salvarAgendamento(){
+
+  const { error } = await supabase
+  .from("agendamentos")
+  .insert({
+
+      fornecedor_id:
+      document.getElementById("fornecedor").value,
+
+      deposito_id:
+      document.getElementById("deposito").value,
+
+      data:
+      document.getElementById("data").value,
+
+      solicitante:
+      document.getElementById("solicitante").value,
+
+      horainicio:
+      document.getElementById("horaInicio").value,
+
+      horafim:
+      document.getElementById("horaFim").value,
+
+      pallets:
+      document.getElementById("pallets").value,
+
+      finalidade:
+      document.getElementById("finalidade").value,
+
+      status:"Agendado"
+
+  });
+
+  if(error){
+      alert(error.message);
+      return;
+  }
+
+  alert("Agendamento salvo");
+
+  carregarAgendamentos();
+
+}
+
+async function carregarAgendamentos(){
+
+  const { data } = await supabase
+  .from("agendamentos")
+  .select("*")
+  .order("id",{ascending:false});
+
+  const tabela =
+  document.getElementById("listaAgendamentos");
+
+  tabela.innerHTML="";
+
+  data.forEach(a=>{
+
+      tabela.innerHTML += `
+      <tr>
+      <td>${a.fornecedor_id}</td>
+      <td>${a.deposito_id}</td>
+      <td>${a.data}</td>
+      <td>${a.horainicio}</td>
+      <td>${a.horafim}</td>
+      <td>${a.status}</td>
+      </tr>
+      `;
+
+  });
+
+}
+
+async function iniciar(){
+
+  await carregarFornecedores();
+  await carregarDepositos();
+  await carregarAgendamentos();
+
+}
+
+iniciar();
 
 </script>
 
